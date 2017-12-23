@@ -14,4 +14,5 @@ Live demo: [https://pablo-albaladejo.github.io/angular-todomvc](https://pablo-al
 ## License
 
 Everything in this repo is MIT License unless otherwise specified.
+
 [MIT](license.md) © Pablo Albaladejo

@@ -24,7 +24,7 @@ export class TodoItemComponent implements OnInit {
   }
 
   stopEditing(editedTitle) {
-    this.todo.setTitle(editedTitle.value);
+    this.todo.title = editedTitle.value;
     this.editing = false;
 
     if (this.todo.title.length === 0) {
@@ -48,6 +48,6 @@ export class TodoItemComponent implements OnInit {
   }
 
   update() {
-    this.itemModified.next(this.todo.uid);
+    this.itemModified.next(this.todo);
   }
 }

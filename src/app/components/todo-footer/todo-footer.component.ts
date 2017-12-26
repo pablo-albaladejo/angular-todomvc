@@ -11,32 +11,42 @@ export class TodoFooterComponent implements OnInit {
 
   currentStatus = '';
 
+  counter: Number;
+  remainingCount: Number;
+  hasCompleted: Boolean;
+
   constructor(
-    private todoStore: TodoStoreService, 
+    private todoStore: TodoStoreService,
     private route: ActivatedRoute) {
   }
 
   ngOnInit() {
+
+    //for css links
     this.route.params
       .map(params => params.status)
       .subscribe((status) => {
         this.currentStatus = status || '';
       });
+
+    //gobal list size
+    this.todoStore.getCount().subscribe(value => {
+      this.counter = value;
+    });
+
+    //remaining list size
+    this.todoStore.getRemainingCount().subscribe(value => {
+      this.remainingCount = value;
+    });
+
+    //has completed items
+    this.todoStore.hasCompleted().subscribe(value => {
+      this.hasCompleted = value;
+    });
   }
 
   removeCompleted() {
     this.todoStore.removeCompleted();
   }
 
-  getCount() {
-    return this.todoStore.todos.length;
-  }
-
-  getRemainingCount() {
-    return this.todoStore.getRemaining().length;
-  }
-
-  hasCompleted() {
-    return this.todoStore.getCompleted().length > 0;
-  }
 }

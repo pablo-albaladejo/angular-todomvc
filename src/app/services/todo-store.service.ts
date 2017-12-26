@@ -1,94 +1,110 @@
 import { Injectable } from '@angular/core';
 
+import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject } from 'rxjs';
+
 import { TodoModel } from '../models/todo.model';
 
 @Injectable()
 export class TodoStoreService {
 
-  todos = [];
-  remainingTodos;
-  completedTodos;
+	STORAGE_KEY = "angular-todomvc";
 
-  constructor() {
-		let persistedTodos = JSON.parse(localStorage.getItem('angular-todomvc')) || [];
+	todos: BehaviorSubject<TodoModel[]>;
 
-		this.todos = persistedTodos.map((todo) => {
-			let ret = new TodoModel(todo.title);
-			ret.completed = todo.completed;
-			ret.uid = todo.uid;
-			return ret;
+	constructor() {
+		this.todos = new BehaviorSubject<TodoModel[]>(this._getStorage());
+	};
+
+	_getStorage(): Array<any> {
+		return JSON.parse(localStorage.getItem(this.STORAGE_KEY)) || [];
+	}
+
+	_setStorage(items: Array<any>) {
+		localStorage.setItem(this.STORAGE_KEY, JSON.stringify(items));
+		this.todos.next(items);
+	};
+
+	add(item) {
+		var items = this._getStorage();
+		items.push(item);
+		this._setStorage(items);
+	}
+
+	update(todo) {
+		let items = this._getStorage().map(item => {
+			return item.uid === todo.uid ? todo : item;
 		});
-	}
-
-	get(state) {
-		return this.todos.filter((todo) => todo.completed === state.completed);
-	}
-
-	allCompleted() {
-		return this.todos.length === this.getCompleted().length;
-	}
-
-	setAllTo(completed) {
-		this.todos.forEach((todo) => todo.completed = completed);
-		this.persist();
-	}
-
-	removeCompleted() {
-		this.todos = this.get({ completed: false });
-		this.persist();
-	}
-
-	getRemaining() {
-		if (!this.remainingTodos) {
-			this.remainingTodos = this.get({ completed: false });
-		}
-
-		return this.remainingTodos;
-	}
-
-	getCompleted() {
-		if (!this.completedTodos) {
-			this.completedTodos = this.get({ completed: true });
-		}
-
-		return this.completedTodos;
-	}
-
-	toggleCompletion(uid) {
-		let todo = this._findByUid(uid);
-
-		if (todo) {
-			todo.completed = !todo.completed;
-			this.persist();
-		}
+		this._setStorage(items);
 	}
 
 	remove(uid) {
-		let todo = this._findByUid(uid);
+		let items = this._getStorage().filter(x => x.uid != uid);
+		this._setStorage(items);
+	}
 
-		if (todo) {
-			this.todos.splice(this.todos.indexOf(todo), 1);
-			this.persist();
+	getTodos(status?): Observable<any> {
+		return this.filterByStatus(status, this.todos);
+	}
+
+	filterByStatus(status, result) {
+		if (status !== undefined) {
+			status = status === "completed" ? true : false;
+			result = result.map(changes => {
+				return changes.filter((todo) => todo.completed === status);
+			});
 		}
+		return result;
 	}
 
-	add(title) {
-		this.todos.push(new TodoModel(title));
-		this.persist();
+	setAllTo(completed: Boolean) {
+		this.getTodos().first().subscribe(todos => {
+			todos.forEach(todo => {
+				if (todo.completed != completed) {
+					todo.completed = completed;
+					this.update(todo);
+				}
+			});
+		});
 	}
 
-	persist() {
-		this._clearCache();
-		localStorage.setItem('angular-todomvc', JSON.stringify(this.todos));
+	removeCompleted() {
+		this.getTodos("completed").first().subscribe(items => {
+			items.forEach(item => {
+				this.remove(item.uid);
+			});
+		});
 	}
 
-	_findByUid(uid) {
-		return this.todos.find((todo) => todo.uid == uid);
+	getCount(): Observable<Number> {
+		return new Observable(observer => {
+			this.getTodos().subscribe(items => {
+				observer.next(items.length);
+			});
+		});
 	}
 
-	_clearCache() {
-		this.completedTodos = null;
-		this.remainingTodos = null;
+	getRemainingCount(): Observable<Number> {
+		return new Observable(observer => {
+			this.getTodos().subscribe(items => {
+				observer.next(items.filter(x => x.completed == false).length);
+			});
+		});
 	}
 
+	hasCompleted(): Observable<Boolean> {
+		return new Observable(observer => {
+			this.getTodos().subscribe(items => {
+				observer.next(items.filter(x => x.completed == true).length > 0);
+			});
+		});
+	}
+
+	getAllCompleted(): Observable<Boolean> {
+		return new Observable(observer => {
+			this.getTodos().subscribe(items => {
+				observer.next(items.filter(x => x.completed == false).length == 0);
+			});
+		});
+	}
 }

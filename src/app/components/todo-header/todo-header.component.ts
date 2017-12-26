@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 import { TodoStoreService } from '../../services/todo-store.service';
+import { TodoModel } from 'app/models/todo.model';
 
 @Component({
   selector: 'todo-header',
@@ -17,7 +18,7 @@ export class TodoHeaderComponent implements OnInit {
 
   addTodo() {
     if (this.newTodo.trim().length) {
-      this.todoStore.add(this.newTodo);
+      this.todoStore.add(new TodoModel(this.newTodo));
       this.newTodo = '';
     }
   }

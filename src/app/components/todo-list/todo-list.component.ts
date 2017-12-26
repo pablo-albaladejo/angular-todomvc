@@ -9,44 +9,46 @@ import { TodoStoreService } from '../../services/todo-store.service';
 })
 export class TodoListComponent implements OnInit {
 
-  currentStatus = "";
+  todos;
+  allCompleted;
 
   constructor(
     private todoStore: TodoStoreService,
-    private route: ActivatedRoute) { }
+    private route: ActivatedRoute) {
+
+      this.todoStore.getAllCompleted().subscribe(value => {
+        this.allCompleted = value;
+      });
+  }
 
   ngOnInit() {
     this.route.params
       .map(params => params.status)
       .subscribe((status) => {
-        this.currentStatus = status;
+        this.getTodos(status);
       });
   }
 
-  remove(uid) {
-    this.todoStore.remove(uid);
+  getTodos(status){
+    this.todoStore.getTodos(status).subscribe(items => {
+      this.todos = items;
+    });
   }
 
-  update() {
-    this.todoStore.persist();
+  remove(todo) {
+    this.todoStore.remove(todo.uid);
   }
 
-  getTodos() {
-    if (this.currentStatus == 'completed') {
-      return this.todoStore.getCompleted();
-    } else if (this.currentStatus == 'active') {
-      return this.todoStore.getRemaining();
-    } else {
-      return this.todoStore.todos;
-    }
+  update(todo) {
+    this.todoStore.update(todo);
   }
 
-  allCompleted() {
-    return this.todoStore.allCompleted();
+	setAllTo(toggleAll) {
+		this.todoStore.setAllTo(toggleAll.checked);
   }
-
-  setAllTo(toggleAll) {
-    this.todoStore.setAllTo(toggleAll.checked);
+  
+  toggleCompletion(todo) {
+    todo.completed = !todo.completed;
+    this.update(todo);
   }
-
 }

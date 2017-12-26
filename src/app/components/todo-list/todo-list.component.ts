@@ -35,8 +35,8 @@ export class TodoListComponent implements OnInit {
     });
   }
 
-  remove(todo) {
-    this.todoStore.remove(todo.uid);
+  remove(uid) {
+    this.todoStore.remove(uid);
   }
 
   update(todo) {
